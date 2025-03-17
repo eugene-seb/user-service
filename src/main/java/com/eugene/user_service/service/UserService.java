@@ -1,11 +1,19 @@
 package com.eugene.user_service.service;
 
+import com.eugene.user_service.dto.EmailDto;
+import com.eugene.user_service.dto.PasswordDto;
+import com.eugene.user_service.dto.RoleDto;
 import com.eugene.user_service.dto.UserDto;
 import com.eugene.user_service.model.Role;
 import com.eugene.user_service.model.User;
 import com.eugene.user_service.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -15,17 +23,26 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public ResponseEntity<User> createUser(UserDto userDto) {
+    public ResponseEntity<User> createUser(UserDto userDto) throws URISyntaxException {
         try {
             Role role = Role.valueOf(userDto.role());
             User user = new User(userDto.username(), userDto.email(), userDto.password(), role);
-            return ResponseEntity.ok(userRepository
-                    .save(user));
+            User userCreated = userRepository.save(user);
+            return ResponseEntity
+                    .created(new URI("/user?username=" + userCreated.getUsername()))
+                    .body(userCreated);
         } catch (IllegalArgumentException e) { // The role doesn't match
             return ResponseEntity
                     .badRequest()
                     .build();
+        } catch (URISyntaxException e) {
+            throw new URISyntaxException("/user?username=?", "URI failed to be created.");
         }
+    }
+
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return ResponseEntity.ok(users);
     }
 
     public ResponseEntity<User> getUserById(String username) {
@@ -38,8 +55,7 @@ public class UserService {
                     .notFound()
                     .build();
         } else {
-            return ResponseEntity
-                    .ok(user);
+            return ResponseEntity.ok(user);
         }
     }
 
@@ -48,4 +64,66 @@ public class UserService {
 
         return ResponseEntity.ok(exist);
     }
+
+    public ResponseEntity<User> updateEmail(EmailDto emailDto) {
+        Optional<User> existingUserOpt = userRepository.findById(emailDto.username());
+        if (existingUserOpt.isEmpty()) {
+            return ResponseEntity
+                    .notFound()
+                    .build();
+        }
+        User userOld = existingUserOpt.get();
+        userOld.setEmail(emailDto.emailUpdated());
+
+        User userUpdated = userRepository.save(userOld);
+
+        return ResponseEntity.ok(userUpdated);
+    }
+
+    public ResponseEntity<User> updatePassword(PasswordDto passwordDto) {
+        Optional<User> existingUserOpt = userRepository.findById(passwordDto.username());
+        if (existingUserOpt.isEmpty()) {
+            return ResponseEntity
+                    .notFound()
+                    .build();
+        }
+        User userOld = existingUserOpt.get();
+        userOld.setPassword(passwordDto.passwordNew());
+
+        User userUpdated = userRepository.save(userOld);
+
+        return ResponseEntity.ok(userUpdated);
+    }
+
+    public ResponseEntity<User> updateRole(RoleDto roleDto) {
+        Optional<User> existingUserOpt = userRepository.findById(roleDto.username());
+        if (existingUserOpt.isEmpty()) {
+            return ResponseEntity
+                    .notFound()
+                    .build();
+        }
+
+        try {
+            User userOld = existingUserOpt.get();
+            Role role = Role.valueOf(roleDto.roleUpdated());
+            userOld.setRole(role);
+
+            User userUpdated = userRepository.save(userOld);
+
+            return ResponseEntity.ok(userUpdated);
+
+        } catch (IllegalArgumentException e) { // The role doesn't match
+            return ResponseEntity
+                    .badRequest()
+                    .build();
+        }
+    }
+
+    public ResponseEntity<User> deleteUser(String username) {
+        userRepository.deleteById(username);
+        return ResponseEntity
+                .ok()
+                .build();
+    }
+
 }
