@@ -61,6 +61,12 @@ class UserMockMcvTest {
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/user?username=" + this.userDto.username()))
                 .andExpect(jsonPath("$.email").value(this.userDto.email()));
+
+        mockMvc
+                .perform(post("/user/create_user")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(this.userDto)))
+                .andExpect(status().isConflict());
     }
 
     @Test

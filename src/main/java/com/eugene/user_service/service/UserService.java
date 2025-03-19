@@ -7,6 +7,7 @@ import com.eugene.user_service.dto.UserDto;
 import com.eugene.user_service.model.Role;
 import com.eugene.user_service.model.User;
 import com.eugene.user_service.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -25,12 +26,22 @@ public class UserService {
 
     public ResponseEntity<User> createUser(UserDto userDto) throws URISyntaxException {
         try {
+            Optional<User> existingUser = userRepository.findById(userDto.username());
+            if (existingUser.isPresent()) {
+                return ResponseEntity
+                        .status(HttpStatus.CONFLICT)
+                        .build();
+            }
+
             Role role = Role.valueOf(userDto.role());
+
             User user = new User(userDto.username(), userDto.email(), userDto.password(), role);
             User userCreated = userRepository.save(user);
+
             return ResponseEntity
                     .created(new URI("/user?username=" + userCreated.getUsername()))
                     .body(userCreated);
+
         } catch (IllegalArgumentException e) { // The role doesn't match
             return ResponseEntity
                     .badRequest()
@@ -39,6 +50,7 @@ public class UserService {
             throw new URISyntaxException("/user?username=?", "URI failed to be created.");
         }
     }
+
 
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = userRepository.findAll();
