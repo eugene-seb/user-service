@@ -2,7 +2,7 @@ package com.eugene.user_service.model;
 
 import jakarta.persistence.*;
 
-import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "user_table")
@@ -19,7 +19,7 @@ public class User {
     private Role role;
 
     @ElementCollection
-    private List<Integer> reviewsIds;
+    private Set<Long> reviewsIds;
 
     public User() {
     }
@@ -63,11 +63,11 @@ public class User {
         this.role = role;
     }
 
-    public List<Integer> getReviewsIds() {
+    public Set<Long> getReviewsIds() {
         return reviewsIds;
     }
 
-    public void setReviewsIds(List<Integer> reviewsIds) {
+    public void setReviewsIds(Set<Long> reviewsIds) {
         this.reviewsIds = reviewsIds;
     }
 }
