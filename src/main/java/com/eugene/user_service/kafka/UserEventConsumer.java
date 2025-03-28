@@ -32,7 +32,7 @@ public class UserEventConsumer {
     @Transactional
     public void handleBookDeletedEvent(String json) throws JsonProcessingException {
         BookDtoEvent bookDtoEvent = objectMapper.readValue(json, BookDtoEvent.class);
-        if ("BOOK_DELETED".equals(bookDtoEvent.getEventType())) {
+        if (bookDtoEvent.getEventType() == KafkaEventType.BOOK_DELETED) {
             deleteUserReviewsByIds(bookDtoEvent.getReviewsIds());
         }
     }
@@ -41,7 +41,7 @@ public class UserEventConsumer {
     @Transactional
     public void handleReviewsCreatedEvent(String json) throws JsonProcessingException {
         ReviewDtoEvent reviewDtoEvent = objectMapper.readValue(json, ReviewDtoEvent.class);
-        if ("REVIEWS_CREATED".equals(reviewDtoEvent.getEventType())) {
+        if (reviewDtoEvent.getEventType() == KafkaEventType.REVIEWS_CREATED) {
             userRepository
                     .findById(reviewDtoEvent.getUsername())
                     .ifPresent(user -> {
@@ -58,7 +58,7 @@ public class UserEventConsumer {
     @Transactional
     public void handleReviewsDeletedEvent(String json) throws JsonProcessingException {
         ReviewDtoEvent reviewDtoEvent = objectMapper.readValue(json, ReviewDtoEvent.class);
-        if ("REVIEWS_DELETED".equals(reviewDtoEvent.getEventType())) {
+        if (reviewDtoEvent.getEventType() == KafkaEventType.REVIEWS_DELETED) {
             deleteUserReviewsByIds(reviewDtoEvent.getReviewsIds());
         }
     }
