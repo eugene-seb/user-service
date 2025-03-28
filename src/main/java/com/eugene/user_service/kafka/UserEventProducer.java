@@ -1,6 +1,8 @@
 package com.eugene.user_service.kafka;
 
-import com.eugene.user_service.dto.event.UserEvent;
+import com.eugene.user_service.dto.event.UserDtoEvent;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -9,13 +11,15 @@ import java.util.Set;
 @Service
 public class UserEventProducer {
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public UserEventProducer(KafkaTemplate<String, Object> kafkaTemplate) {
+    public UserEventProducer(KafkaTemplate<String, String> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void sendUserDeletedEvent(Set<Long> reviewsIds) {
-        kafkaTemplate.send("user.events", new UserEvent("USER_DELETED", reviewsIds));
+    public void sendUserDeletedEvent(Set<Long> reviewsIds) throws JsonProcessingException {
+        String json = objectMapper.writeValueAsString(new UserDtoEvent("USER_DELETED", reviewsIds));
+        kafkaTemplate.send("user.events", json);
     }
 }

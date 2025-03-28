@@ -8,6 +8,7 @@ import com.eugene.user_service.kafka.UserEventProducer;
 import com.eugene.user_service.model.Role;
 import com.eugene.user_service.model.User;
 import com.eugene.user_service.repository.UserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -147,7 +148,11 @@ public class UserService {
                 .findById(username)
                 .ifPresent(user -> {
                     userRepository.deleteById(username);
-                    userEventProducer.sendUserDeletedEvent(user.getReviewsIds());
+                    try {
+                        userEventProducer.sendUserDeletedEvent(user.getReviewsIds());
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e.getMessage(), e.getCause());
+                    }
                 });
         return ResponseEntity
                 .ok()
