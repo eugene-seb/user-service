@@ -1,4 +1,4 @@
-package com.eugene.user_service.mocktest;
+package com.eugene.user_service.service;
 
 import com.eugene.user_service.dto.EmailDto;
 import com.eugene.user_service.dto.PasswordDto;
@@ -10,10 +10,14 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -22,20 +26,26 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ImportAutoConfiguration(exclude = {KafkaAutoConfiguration.class})
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class UserMockMcvTest {
+class UserServiceMockTest {
 
     private final UserDto userDto;
     private final EmailDto emailDto;
     private final PasswordDto passwordDto;
     private final RoleDto roleDto;
 
+    /// I don't want the context to load kafka for this test, so I'm mocking his initialization
+    /// It will be used in each function of service that call Kafka producer/consumer
+    @MockitoBean
+    private KafkaTemplate<String, String> kafkaTemplate;
+
     @Autowired
     private MockMvc mockMvc;
 
-    public UserMockMcvTest() {
+    public UserServiceMockTest() {
         this.userDto = new UserDto("username1", "email1", "password1", "USER", List.of());
         this.emailDto = new EmailDto(this.userDto.username(), "emailNew");
         this.passwordDto = new PasswordDto(this.userDto.username(), "passwordNew");
