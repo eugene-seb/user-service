@@ -12,6 +12,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,9 +46,9 @@ public class UserEventConsumer {
             userRepository
                     .findById(reviewDtoEvent.getUsername())
                     .ifPresent(user -> {
-                        user
-                                .getReviewsIds()
-                                .addAll(reviewDtoEvent.getReviewsIds());
+                        Set<Long> reviewIds = new HashSet<>(user.getReviewsIds());
+                        reviewIds.addAll(reviewDtoEvent.getReviewsIds());
+                        user.setReviewsIds(reviewIds);
                         userRepository.save(user);
                         log.info("ID of the review saved in User");
                     });
