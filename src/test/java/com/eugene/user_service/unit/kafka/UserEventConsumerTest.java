@@ -1,7 +1,9 @@
-package com.eugene.user_service.kafka;
+package com.eugene.user_service.unit.kafka;
 
 import com.eugene.user_service.dto.event.BookDtoEvent;
 import com.eugene.user_service.dto.event.ReviewDtoEvent;
+import com.eugene.user_service.kafka.KafkaEventType;
+import com.eugene.user_service.kafka.UserEventConsumer;
 import com.eugene.user_service.model.Role;
 import com.eugene.user_service.model.User;
 import com.eugene.user_service.repository.UserRepository;

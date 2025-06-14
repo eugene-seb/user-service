@@ -1,4 +1,4 @@
-package com.eugene.user_service.service;
+package com.eugene.user_service.functional;
 
 import com.eugene.user_service.dto.EmailDto;
 import com.eugene.user_service.dto.PasswordDto;
@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-class UserServiceMockTest {
+class UserServiceFunctionalTest {
 
     private final UserDto userDto;
     private final EmailDto emailDto;
@@ -40,14 +40,14 @@ class UserServiceMockTest {
     private final RoleDto roleDto;
 
     /// I don't want the context to load kafka for this test, so I'm mocking his initialization
-    /// It will be used in each function of service that call Kafka producer/consumer
+    /// It will replace all the KafkaTemplate instances.
     @MockitoBean
     private KafkaTemplate<String, String> kafkaTemplate;
 
     @Autowired
     private MockMvc mockMvc;
 
-    public UserServiceMockTest() {
+    public UserServiceFunctionalTest() {
         this.userDto = new UserDto("username1", "email1", "password1", "USER", List.of());
         this.emailDto = new EmailDto(this.userDto.username(), "emailNew");
         this.passwordDto = new PasswordDto(this.userDto.username(), "passwordNew");

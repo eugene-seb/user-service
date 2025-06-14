@@ -1,5 +1,6 @@
-package com.eugene.user_service.controller;
+package com.eugene.user_service.unit.controller;
 
+import com.eugene.user_service.controller.UserController;
 import com.eugene.user_service.model.Role;
 import com.eugene.user_service.model.User;
 import com.eugene.user_service.service.UserService;
