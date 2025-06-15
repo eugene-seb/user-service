@@ -1,5 +1,6 @@
 package com.eugene.user_service.model;
 
+import com.eugene.user_service.dto.UserInfosDto;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,6 +35,12 @@ public class User {
         this.password = password;
         this.role = role;
         this.reviewsIds = new HashSet<>();
+    }
+
+    public UserInfosDto toUserInfosDto() {
+        return new UserInfosDto(this.getUsername(), this.getEmail(), this
+                .getRole()
+                .name());
     }
 
 }

@@ -1,10 +1,6 @@
 package com.eugene.user_service.controller;
 
-import com.eugene.user_service.dto.EmailDto;
-import com.eugene.user_service.dto.PasswordDto;
-import com.eugene.user_service.dto.RoleDto;
-import com.eugene.user_service.dto.UserDto;
-import com.eugene.user_service.model.User;
+import com.eugene.user_service.dto.*;
 import com.eugene.user_service.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,17 +18,18 @@ public class UserController {
     }
 
     @PostMapping("create_user")
-    public ResponseEntity<User> createUser(@RequestBody UserDto userDto) throws URISyntaxException {
+    public ResponseEntity<UserInfosDto> createUser(@RequestBody UserDto userDto) throws
+            URISyntaxException {
         return userService.createUser(userDto);
     }
 
     @GetMapping("all_users")
-    public ResponseEntity<List<User>> getAllUsers() {
+    public ResponseEntity<List<UserInfosDto>> getAllUsers() {
         return userService.getAllUsers();
     }
 
     @GetMapping
-    public ResponseEntity<User> getUserById(@RequestParam String username) {
+    public ResponseEntity<UserInfosDto> getUserById(@RequestParam String username) {
         return userService.getUserById(username);
     }
 
@@ -42,17 +39,17 @@ public class UserController {
     }
 
     @PutMapping("/update/email")
-    public ResponseEntity<User> updateEmail(@RequestBody EmailDto emailDto) {
+    public ResponseEntity<UserInfosDto> updateEmail(@RequestBody EmailDto emailDto) {
         return userService.updateEmail(emailDto);
     }
 
     @PutMapping("/update/password")
-    public ResponseEntity<User> updatePassword(@RequestBody PasswordDto passwordDto) {
+    public ResponseEntity<UserInfosDto> updatePassword(@RequestBody PasswordDto passwordDto) {
         return userService.updatePassword(passwordDto);
     }
 
     @PutMapping("/update/role")
-    public ResponseEntity<User> updateRole(@RequestBody RoleDto roleDto) {
+    public ResponseEntity<UserInfosDto> updateRole(@RequestBody RoleDto roleDto) {
         return userService.updateRole(roleDto);
     }
 

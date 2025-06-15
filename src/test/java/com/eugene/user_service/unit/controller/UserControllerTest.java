@@ -1,8 +1,8 @@
 package com.eugene.user_service.unit.controller;
 
 import com.eugene.user_service.controller.UserController;
+import com.eugene.user_service.dto.UserInfosDto;
 import com.eugene.user_service.model.Role;
-import com.eugene.user_service.model.User;
 import com.eugene.user_service.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +31,7 @@ class UserControllerTest {
 
     @Test
     void getUser() throws Exception {
-        User user = new User("String username", "String email", "String password", Role.USER);
+        UserInfosDto user = new UserInfosDto("String username", "String email", Role.USER.name());
 
         given(userService.getUserById(anyString())).willReturn(ResponseEntity.ok(user));
 

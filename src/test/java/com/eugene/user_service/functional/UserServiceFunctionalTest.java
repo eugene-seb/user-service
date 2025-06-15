@@ -4,6 +4,7 @@ import com.eugene.user_service.dto.EmailDto;
 import com.eugene.user_service.dto.PasswordDto;
 import com.eugene.user_service.dto.RoleDto;
 import com.eugene.user_service.dto.UserDto;
+import com.eugene.user_service.model.Role;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -20,8 +21,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -48,10 +47,10 @@ class UserServiceFunctionalTest {
     private MockMvc mockMvc;
 
     public UserServiceFunctionalTest() {
-        this.userDto = new UserDto("username1", "email1", "password1", "USER", List.of());
+        this.userDto = new UserDto("username1", "email1", "password1", Role.USER.name());
         this.emailDto = new EmailDto(this.userDto.username(), "emailNew");
         this.passwordDto = new PasswordDto(this.userDto.username(), "passwordNew");
-        this.roleDto = new RoleDto(this.userDto.username(), "ADMIN");
+        this.roleDto = new RoleDto(this.userDto.username(), Role.ADMIN.name());
     }
 
     private static String asJsonString(final Object obj) {
@@ -132,7 +131,7 @@ class UserServiceFunctionalTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(passwordDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.password").value(passwordDto.passwordNew()));
+                .andExpect(jsonPath("$.username").value(passwordDto.username()));
     }
 
     @Test

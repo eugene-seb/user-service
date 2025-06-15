@@ -1,9 +1,6 @@
 package com.eugene.user_service.service;
 
-import com.eugene.user_service.dto.EmailDto;
-import com.eugene.user_service.dto.PasswordDto;
-import com.eugene.user_service.dto.RoleDto;
-import com.eugene.user_service.dto.UserDto;
+import com.eugene.user_service.dto.*;
 import com.eugene.user_service.kafka.UserEventProducer;
 import com.eugene.user_service.model.Role;
 import com.eugene.user_service.model.User;
@@ -17,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UserService {
@@ -30,24 +26,25 @@ public class UserService {
     }
 
     @Transactional
-    public ResponseEntity<User> createUser(UserDto userDto) throws URISyntaxException {
+    public ResponseEntity<UserInfosDto> createUser(UserDto userDto) throws URISyntaxException {
         try {
-            Optional<User> existingUser = userRepository.findById(userDto.username());
-            if (existingUser.isPresent()) {
+            boolean isUserExists = userRepository
+                    .findById(userDto.username())
+                    .isPresent();
+            if (isUserExists) {
                 return ResponseEntity
                         .status(HttpStatus.CONFLICT)
                         .build();
+            } else {
+                User user = userDto.toUser();
+                UserInfosDto userCreated = userRepository
+                        .save(user)
+                        .toUserInfosDto();
+
+                return ResponseEntity
+                        .created(new URI("/user?username=" + userCreated.username()))
+                        .body(userCreated);
             }
-
-            Role role = Role.valueOf(userDto.role());
-
-            User user = new User(userDto.username(), userDto.email(), userDto.password(), role);
-            User userCreated = userRepository.save(user);
-
-            return ResponseEntity
-                    .created(new URI("/user?username=" + userCreated.getUsername()))
-                    .body(userCreated);
-
         } catch (IllegalArgumentException e) { // The role doesn't match
             return ResponseEntity
                     .badRequest()
@@ -58,13 +55,17 @@ public class UserService {
     }
 
     @Transactional
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userRepository.findAll();
+    public ResponseEntity<List<UserInfosDto>> getAllUsers() {
+        List<UserInfosDto> users = userRepository
+                .findAll()
+                .stream()
+                .map(User::toUserInfosDto)
+                .toList();
         return ResponseEntity.ok(users);
     }
 
     @Transactional
-    public ResponseEntity<User> getUserById(String username) {
+    public ResponseEntity<UserInfosDto> getUserById(String username) {
         User user = userRepository
                 .findById(username)
                 .orElse(null);
@@ -74,7 +75,7 @@ public class UserService {
                     .notFound()
                     .build();
         } else {
-            return ResponseEntity.ok(user);
+            return ResponseEntity.ok(user.toUserInfosDto());
         }
     }
 
@@ -86,59 +87,68 @@ public class UserService {
     }
 
     @Transactional
-    public ResponseEntity<User> updateEmail(EmailDto emailDto) {
-        Optional<User> existingUserOpt = userRepository.findById(emailDto.username());
-        if (existingUserOpt.isEmpty()) {
+    public ResponseEntity<UserInfosDto> updateEmail(EmailDto emailDto) {
+        User user = userRepository
+                .findById(emailDto.username())
+                .orElse(null);
+        if (user == null) {
             return ResponseEntity
                     .notFound()
                     .build();
+        } else {
+            user.setEmail(emailDto.emailUpdated());
+
+            User userUpdated = userRepository.save(user);
+
+            return ResponseEntity.ok(userUpdated.toUserInfosDto());
         }
-        User userOld = existingUserOpt.get();
-        userOld.setEmail(emailDto.emailUpdated());
-
-        User userUpdated = userRepository.save(userOld);
-
-        return ResponseEntity.ok(userUpdated);
     }
 
     @Transactional
-    public ResponseEntity<User> updatePassword(PasswordDto passwordDto) {
-        Optional<User> existingUserOpt = userRepository.findById(passwordDto.username());
-        if (existingUserOpt.isEmpty()) {
+    public ResponseEntity<UserInfosDto> updatePassword(PasswordDto passwordDto) {
+        User user = userRepository
+                .findById(passwordDto.username())
+                .orElse(null);
+        if (user == null) {
             return ResponseEntity
                     .notFound()
                     .build();
-        }
-        User userOld = existingUserOpt.get();
-        userOld.setPassword(passwordDto.passwordNew());
+        } else {
+            user.setPassword(passwordDto.passwordNew());
 
-        User userUpdated = userRepository.save(userOld);
-
-        return ResponseEntity.ok(userUpdated);
-    }
-
-    @Transactional
-    public ResponseEntity<User> updateRole(RoleDto roleDto) {
-        Optional<User> existingUserOpt = userRepository.findById(roleDto.username());
-        if (existingUserOpt.isEmpty()) {
-            return ResponseEntity
-                    .notFound()
-                    .build();
-        }
-
-        try {
-            User userOld = existingUserOpt.get();
-            Role role = Role.valueOf(roleDto.roleUpdated());
-            userOld.setRole(role);
-
-            User userUpdated = userRepository.save(userOld);
+            UserInfosDto userUpdated = userRepository
+                    .save(user)
+                    .toUserInfosDto();
 
             return ResponseEntity.ok(userUpdated);
+        }
+    }
 
-        } catch (IllegalArgumentException e) { // The role doesn't match
+    @Transactional
+    public ResponseEntity<UserInfosDto> updateRole(RoleDto roleDto) {
+        User user = userRepository
+                .findById(roleDto.username())
+                .orElse(null);
+        if (user == null) {
             return ResponseEntity
-                    .badRequest()
+                    .notFound()
                     .build();
+        } else {
+            try {
+                Role role = Role.valueOf(roleDto.roleUpdated());
+                user.setRole(role);
+
+                UserInfosDto userUpdated = userRepository
+                        .save(user)
+                        .toUserInfosDto();
+
+                return ResponseEntity.ok(userUpdated);
+
+            } catch (IllegalArgumentException e) { // The role doesn't match
+                return ResponseEntity
+                        .badRequest()
+                        .build();
+            }
         }
     }
 
