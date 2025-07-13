@@ -7,7 +7,6 @@ import com.eugene.user_service.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -33,7 +32,7 @@ class UserControllerTest {
     void getUser() throws Exception {
         UserInfosDto user = new UserInfosDto("String username", "String email", Role.USER.name());
 
-        given(userService.getUserById(anyString())).willReturn(ResponseEntity.ok(user));
+        given(userService.getUserById(anyString())).willReturn(user);
 
         mockMvc
                 .perform(get("/user?username={name}", anyString()))

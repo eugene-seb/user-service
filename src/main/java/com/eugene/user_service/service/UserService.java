@@ -1,22 +1,20 @@
 package com.eugene.user_service.service;
 
 import com.eugene.user_service.dto.*;
+import com.eugene.user_service.exception.DuplicatedException;
+import com.eugene.user_service.exception.NotFoundException;
 import com.eugene.user_service.kafka.UserEventProducer;
 import com.eugene.user_service.model.Role;
 import com.eugene.user_service.model.User;
 import com.eugene.user_service.repository.UserRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 
 @Service
 public class UserService {
+
     private final UserEventProducer userEventProducer;
     private final UserRepository userRepository;
 
@@ -25,147 +23,107 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    @Transactional
-    public ResponseEntity<UserInfosDto> createUser(UserDto userDto) throws URISyntaxException {
-        try {
-            boolean isUserExists = userRepository
-                    .findById(userDto.username())
-                    .isPresent();
-            if (isUserExists) {
-                return ResponseEntity
-                        .status(HttpStatus.CONFLICT)
-                        .build();
-            } else {
-                User user = userDto.toUser();
-                UserInfosDto userCreated = userRepository
-                        .save(user)
-                        .toUserInfosDto();
+    private static String getUserNotFoundMessage(String username) {
+        return "User with username '" + username + "' not found.";
+    }
 
-                return ResponseEntity
-                        .created(new URI("/user?username=" + userCreated.username()))
-                        .body(userCreated);
-            }
-        } catch (IllegalArgumentException e) { // The role doesn't match
-            return ResponseEntity
-                    .badRequest()
-                    .build();
-        } catch (URISyntaxException e) {
-            throw new URISyntaxException("/user?username=?", "URI failed to be created.");
+    @Transactional
+    public UserInfosDto createUser(UserDto userDto) {
+        boolean exists = userRepository
+                .findById(userDto.username())
+                .isPresent();
+        if (exists) {
+            throw new DuplicatedException(
+                    "User with username '" + userDto.username() + "' already exists.", null);
+        }
+        try {
+            User user = userDto.toUser();
+            return userRepository
+                    .save(user)
+                    .toUserInfosDto();
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid role specified: " + userDto.role());
         }
     }
 
     @Transactional
-    public ResponseEntity<List<UserInfosDto>> getAllUsers() {
-        List<UserInfosDto> users = userRepository
+    public List<UserInfosDto> getAllUsers() {
+        return userRepository
                 .findAll()
                 .stream()
                 .map(User::toUserInfosDto)
                 .toList();
-        return ResponseEntity.ok(users);
     }
 
     @Transactional
-    public ResponseEntity<UserInfosDto> getUserById(String username) {
-        User user = userRepository
+    public UserInfosDto getUserById(String username) {
+        return userRepository
                 .findById(username)
-                .orElse(null);
-
-        if (user == null) {
-            return ResponseEntity
-                    .notFound()
-                    .build();
-        } else {
-            return ResponseEntity.ok(user.toUserInfosDto());
-        }
+                .map(User::toUserInfosDto)
+                .orElseThrow(() -> new NotFoundException(getUserNotFoundMessage(username), null));
     }
 
     @Transactional
-    public ResponseEntity<Boolean> isUserExist(String username) {
-        boolean exist = userRepository.existsById(username);
-
-        return ResponseEntity.ok(exist);
+    public Boolean isUserExist(String username) {
+        return userRepository.existsById(username);
     }
 
     @Transactional
-    public ResponseEntity<UserInfosDto> updateEmail(EmailDto emailDto) {
+    public UserInfosDto updateEmail(EmailDto emailDto) {
         User user = userRepository
                 .findById(emailDto.username())
-                .orElse(null);
-        if (user == null) {
-            return ResponseEntity
-                    .notFound()
-                    .build();
-        } else {
-            user.setEmail(emailDto.emailUpdated());
+                .orElseThrow(
+                        () -> new NotFoundException(getUserNotFoundMessage(emailDto.username()),
+                                null));
 
-            User userUpdated = userRepository.save(user);
+        user.setEmail(emailDto.emailUpdated());
 
-            return ResponseEntity.ok(userUpdated.toUserInfosDto());
-        }
+        return userRepository
+                .save(user)
+                .toUserInfosDto();
     }
 
     @Transactional
-    public ResponseEntity<UserInfosDto> updatePassword(PasswordDto passwordDto) {
+    public UserInfosDto updatePassword(PasswordDto passwordDto) {
         User user = userRepository
                 .findById(passwordDto.username())
-                .orElse(null);
-        if (user == null) {
-            return ResponseEntity
-                    .notFound()
-                    .build();
-        } else {
-            user.setPassword(passwordDto.passwordNew());
+                .orElseThrow(
+                        () -> new NotFoundException(getUserNotFoundMessage(passwordDto.username()),
+                                null));
 
-            UserInfosDto userUpdated = userRepository
+        user.setPassword(passwordDto.passwordNew());
+
+        return userRepository
+                .save(user)
+                .toUserInfosDto();
+    }
+
+    @Transactional
+    public UserInfosDto updateRole(RoleDto roleDto) {
+        User user = userRepository
+                .findById(roleDto.username())
+                .orElseThrow(() -> new NotFoundException(getUserNotFoundMessage(roleDto.username()),
+                        null));
+        try {
+            Role role = Role.valueOf(roleDto.roleUpdated());
+            user.setRole(role);
+
+            return userRepository
                     .save(user)
                     .toUserInfosDto();
 
-            return ResponseEntity.ok(userUpdated);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid role value: " + roleDto.roleUpdated());
         }
     }
 
     @Transactional
-    public ResponseEntity<UserInfosDto> updateRole(RoleDto roleDto) {
+    public void deleteUser(String username) {
         User user = userRepository
-                .findById(roleDto.username())
-                .orElse(null);
-        if (user == null) {
-            return ResponseEntity
-                    .notFound()
-                    .build();
-        } else {
-            try {
-                Role role = Role.valueOf(roleDto.roleUpdated());
-                user.setRole(role);
-
-                UserInfosDto userUpdated = userRepository
-                        .save(user)
-                        .toUserInfosDto();
-
-                return ResponseEntity.ok(userUpdated);
-
-            } catch (IllegalArgumentException e) { // The role doesn't match
-                return ResponseEntity
-                        .badRequest()
-                        .build();
-            }
-        }
-    }
-
-    @Transactional
-    public ResponseEntity<Void> deleteUser(String username) {
-        userRepository
                 .findById(username)
-                .ifPresent(user -> {
-                    userRepository.deleteById(username);
-                    try {
-                        userEventProducer.sendUserDeletedEvent(user.getReviewsIds());
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e.getMessage(), e.getCause());
-                    }
-                });
-        return ResponseEntity
-                .ok()
-                .build();
+                .orElseThrow(() -> new NotFoundException(getUserNotFoundMessage(username), null));
+
+        userRepository.deleteById(username);
+        userEventProducer.sendUserDeletedEvent(user.getReviewsIds());
     }
 }
