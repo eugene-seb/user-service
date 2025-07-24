@@ -20,8 +20,8 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
-class UserEventProducerTest {
-
+class UserEventProducerTest
+{
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Mock
     private KafkaTemplate<String, String> kafkaTemplate;
@@ -31,11 +31,11 @@ class UserEventProducerTest {
     @Test
     void sendUserDeletedEvent() throws JsonProcessingException {
         Set<Long> reviewsIds = Set.of(1L, 2L);
-        String json = objectMapper.writeValueAsString(
+        String json = this.objectMapper.writeValueAsString(
                 new UserDtoEvent(KafkaEventType.USER_DELETED, reviewsIds));
 
-        userEventProducer.sendUserDeletedEvent(reviewsIds);
+        this.userEventProducer.sendUserDeletedEvent(reviewsIds);
 
-        verify(kafkaTemplate, times(1)).send("user.events", json);
+        verify(this.kafkaTemplate, times(1)).send("user.events", json);
     }
 }

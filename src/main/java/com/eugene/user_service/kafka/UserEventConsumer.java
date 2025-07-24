@@ -19,8 +19,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-public class UserEventConsumer {
-
+public class UserEventConsumer
+{
     private final Logger log = LoggerFactory.getLogger(UserEventConsumer.class);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -33,7 +33,7 @@ public class UserEventConsumer {
     @KafkaListener(topics = "book.events", groupId = "user-service-group")
     @Transactional
     public void handleBookDeletedEvent(String json) throws JsonProcessingException {
-        BookDtoEvent bookDtoEvent = objectMapper.readValue(json, BookDtoEvent.class);
+        BookDtoEvent bookDtoEvent = this.objectMapper.readValue(json, BookDtoEvent.class);
         if (Objects.equals(bookDtoEvent.getEventType(), KafkaEventType.BOOK_DELETED)) {
             deleteUserReviewsByIds(bookDtoEvent.getReviewsIds());
         }
@@ -42,40 +42,38 @@ public class UserEventConsumer {
     @KafkaListener(topics = "review.events", groupId = "user-service-group")
     @Transactional
     public void handleReviewsCreatedEvent(String json) throws JsonProcessingException {
-        ReviewDtoEvent reviewDtoEvent = objectMapper.readValue(json, ReviewDtoEvent.class);
+        ReviewDtoEvent reviewDtoEvent = this.objectMapper.readValue(json, ReviewDtoEvent.class);
         if (Objects.equals(reviewDtoEvent.getEventType(), KafkaEventType.REVIEWS_CREATED)) {
-            userRepository
-                    .findById(reviewDtoEvent.getUsername())
-                    .ifPresent(user -> {
-                        Set<Long> reviewIds = new HashSet<>(user.getReviewsIds());
-                        reviewIds.addAll(reviewDtoEvent.getReviewsIds());
-                        user.setReviewsIds(reviewIds);
-                        userRepository.save(user);
-                        log.info("ID of the review saved in User");
-                    });
+            this.userRepository.findById(reviewDtoEvent.getUsername())
+                               .ifPresent(user -> {
+                                   Set<Long> reviewIds = new HashSet<>(user.getReviewsIds());
+                                   reviewIds.addAll(reviewDtoEvent.getReviewsIds());
+                                   user.setReviewsIds(reviewIds);
+                                   this.userRepository.save(user);
+                                   this.log.info("ID of the review saved in User");
+                               });
         }
     }
 
     @KafkaListener(topics = "review.events", groupId = "user-service-group")
     @Transactional
     public void handleReviewsDeletedEvent(String json) throws JsonProcessingException {
-        ReviewDtoEvent reviewDtoEvent = objectMapper.readValue(json, ReviewDtoEvent.class);
+        ReviewDtoEvent reviewDtoEvent = this.objectMapper.readValue(json, ReviewDtoEvent.class);
         if (Objects.equals(reviewDtoEvent.getEventType(), KafkaEventType.REVIEWS_DELETED)) {
             deleteUserReviewsByIds(reviewDtoEvent.getReviewsIds());
         }
     }
 
     private void deleteUserReviewsByIds(Set<Long> reviewsIds) {
-        List<User> users = userRepository.findAll();
+        List<User> users = this.userRepository.findAll();
         for (User u : users) {
-            Set<Long> reviewsIdsUpdated = u
-                    .getReviewsIds()
-                    .stream()
-                    .filter(r -> !reviewsIds.contains(r))
-                    .collect(Collectors.toSet());
+            Set<Long> reviewsIdsUpdated = u.getReviewsIds()
+                                           .stream()
+                                           .filter(r -> !reviewsIds.contains(r))
+                                           .collect(Collectors.toSet());
             u.setReviewsIds(reviewsIdsUpdated);
-            userRepository.save(u);
+            this.userRepository.save(u);
         }
-        log.info("Reviews deleted in Users");
+        this.log.info("Reviews deleted in Users");
     }
 }

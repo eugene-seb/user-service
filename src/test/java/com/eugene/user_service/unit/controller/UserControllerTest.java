@@ -20,8 +20,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(UserController.class)
 @ActiveProfiles("test")
-class UserControllerTest {
-
+class UserControllerTest
+{
     @Autowired
     MockMvc mockMvc;
 
@@ -32,13 +32,12 @@ class UserControllerTest {
     void getUser() throws Exception {
         UserInfosDto user = new UserInfosDto("String username", "String email", Role.USER.name());
 
-        given(userService.getUserById(anyString())).willReturn(user);
+        given(this.userService.getUserById(anyString())).willReturn(user);
 
-        mockMvc
-                .perform(get("/user?username={name}", anyString()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("username").value("String username"));
+        this.mockMvc.perform(get("/user?username={name}", anyString()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("username").value("String username"));
 
-        verify(userService).getUserById(anyString());
+        verify(this.userService).getUserById(anyString());
     }
 }

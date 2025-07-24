@@ -10,7 +10,8 @@ import org.springframework.stereotype.Service;
 import java.util.Set;
 
 @Service
-public class UserEventProducer {
+public class UserEventProducer
+{
 
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -21,9 +22,9 @@ public class UserEventProducer {
 
     public void sendUserDeletedEvent(Set<Long> reviewsIds) {
         try {
-            String json = objectMapper.writeValueAsString(
+            String json = this.objectMapper.writeValueAsString(
                     new UserDtoEvent(KafkaEventType.USER_DELETED, reviewsIds));
-            kafkaTemplate.send("user.events", json);
+            this.kafkaTemplate.send("user.events", json);
         } catch (JsonProcessingException e) {
             throw new JsonException("Failed to serialize the list of IDs", e.getCause());
         }

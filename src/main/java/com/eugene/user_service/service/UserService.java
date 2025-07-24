@@ -13,12 +13,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
-public class UserService {
-
+public class UserService
+{
     private final UserEventProducer userEventProducer;
     private final UserRepository userRepository;
 
-    public UserService(UserEventProducer userEventProducer, UserRepository userRepository) {
+    public UserService(
+            UserEventProducer userEventProducer,
+            UserRepository userRepository
+    ) {
         this.userEventProducer = userEventProducer;
         this.userRepository = userRepository;
     }
@@ -29,101 +32,93 @@ public class UserService {
 
     @Transactional
     public UserInfosDto createUser(UserDto userDto) {
-        boolean exists = userRepository
-                .findById(userDto.username())
-                .isPresent();
+        boolean exists = this.userRepository.findById(userDto.getUsername())
+                                            .isPresent();
         if (exists) {
             throw new DuplicatedException(
-                    "User with username '" + userDto.username() + "' already exists.", null);
+                    "User with username '" + userDto.getUsername() + "' already exists.", null);
         }
         try {
             User user = userDto.toUser();
-            return userRepository
-                    .save(user)
-                    .toUserInfosDto();
+            return this.userRepository.save(user)
+                                      .toUserInfosDto();
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid role specified: " + userDto.role());
+            throw new IllegalArgumentException("Invalid role specified: " + userDto.getRole());
         }
     }
 
     @Transactional
     public List<UserInfosDto> getAllUsers() {
-        return userRepository
-                .findAll()
-                .stream()
-                .map(User::toUserInfosDto)
-                .toList();
+        return this.userRepository.findAll()
+                                  .stream()
+                                  .map(User::toUserInfosDto)
+                                  .toList();
     }
 
     @Transactional
     public UserInfosDto getUserById(String username) {
-        return userRepository
-                .findById(username)
-                .map(User::toUserInfosDto)
-                .orElseThrow(() -> new NotFoundException(getUserNotFoundMessage(username), null));
+        return this.userRepository.findById(username)
+                                  .map(User::toUserInfosDto)
+                                  .orElseThrow(() -> new NotFoundException(
+                                          getUserNotFoundMessage(username), null));
     }
 
     @Transactional
     public Boolean isUserExist(String username) {
-        return userRepository.existsById(username);
+        return this.userRepository.existsById(username);
     }
 
     @Transactional
     public UserInfosDto updateEmail(EmailDto emailDto) {
-        User user = userRepository
-                .findById(emailDto.username())
-                .orElseThrow(
-                        () -> new NotFoundException(getUserNotFoundMessage(emailDto.username()),
-                                null));
+        User user = this.userRepository.findById(emailDto.getUsername())
+                                       .orElseThrow(() -> new NotFoundException(
+                                               getUserNotFoundMessage(emailDto.getUsername()),
+                                               null));
 
-        user.setEmail(emailDto.emailUpdated());
+        user.setEmail(emailDto.getEmail());
 
-        return userRepository
-                .save(user)
-                .toUserInfosDto();
+        return this.userRepository.save(user)
+                                  .toUserInfosDto();
     }
 
     @Transactional
     public UserInfosDto updatePassword(PasswordDto passwordDto) {
-        User user = userRepository
-                .findById(passwordDto.username())
-                .orElseThrow(
-                        () -> new NotFoundException(getUserNotFoundMessage(passwordDto.username()),
-                                null));
+        User user = this.userRepository.findById(passwordDto.getUsername())
+                                       .orElseThrow(() -> new NotFoundException(
+                                               getUserNotFoundMessage(passwordDto.getUsername()),
+                                               null));
 
-        user.setPassword(passwordDto.passwordNew());
+        user.setPassword(passwordDto.getPassword());
 
-        return userRepository
-                .save(user)
-                .toUserInfosDto();
+        return this.userRepository.save(user)
+                                  .toUserInfosDto();
     }
 
     @Transactional
     public UserInfosDto updateRole(RoleDto roleDto) {
-        User user = userRepository
-                .findById(roleDto.username())
-                .orElseThrow(() -> new NotFoundException(getUserNotFoundMessage(roleDto.username()),
-                        null));
+        User user = this.userRepository.findById(roleDto.getUsername())
+                                       .orElseThrow(() -> new NotFoundException(
+                                               getUserNotFoundMessage(roleDto.getUsername()),
+                                               null));
         try {
-            Role role = Role.valueOf(roleDto.roleUpdated());
+            Role role = Role.valueOf(roleDto.getRole());
             user.setRole(role);
 
-            return userRepository
-                    .save(user)
-                    .toUserInfosDto();
+            return this.userRepository.save(user)
+                                      .toUserInfosDto();
 
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid role value: " + roleDto.roleUpdated());
+            throw new IllegalArgumentException("Invalid role value: " + roleDto.getRole());
         }
     }
 
     @Transactional
     public void deleteUser(String username) {
-        User user = userRepository
-                .findById(username)
-                .orElseThrow(() -> new NotFoundException(getUserNotFoundMessage(username), null));
+        User user = this.userRepository.findById(username)
+                                       .orElseThrow(() -> new NotFoundException(
+                                               getUserNotFoundMessage(username), null));
 
-        userRepository.deleteById(username);
-        userEventProducer.sendUserDeletedEvent(user.getReviewsIds());
+        this.userRepository.deleteById(username);
+        this.userEventProducer.sendUserDeletedEvent(user.getReviewsIds());
     }
 }

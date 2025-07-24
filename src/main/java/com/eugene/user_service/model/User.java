@@ -14,8 +14,8 @@ import java.util.Set;
 @Setter
 @Getter
 @NoArgsConstructor
-public class User {
-
+public class User
+{
     @Id
     @Column(name = "username", unique = true, nullable = false)
     private String username;
@@ -29,7 +29,12 @@ public class User {
     @ElementCollection
     private Set<Long> reviewsIds;
 
-    public User(String username, String email, String password, Role role) {
+    public User(
+            String username,
+            String email,
+            String password,
+            Role role
+    ) {
         this.username = username;
         this.email = email;
         this.password = password;
@@ -38,9 +43,8 @@ public class User {
     }
 
     public UserInfosDto toUserInfosDto() {
-        return new UserInfosDto(this.getUsername(), this.getEmail(), this
-                .getRole()
-                .name());
+        return new UserInfosDto(this.getUsername(), this.getEmail(), this.getRole()
+                                                                         .name());
     }
 
 }
