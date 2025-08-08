@@ -29,80 +29,92 @@ import static org.mockito.Mockito.verify;
 @ActiveProfiles("test")
 class UserEventConsumerTest
 {
-
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Set<Long> reviewIds;
+    private final Set<Long> reviewIdsToDelete;
+    private final Set<Long> reviewIdsAfterDelete;
+    private final User user1;
+    private final User user2;
+    
     @Mock
     private UserRepository userRepository;
     @InjectMocks
     private UserEventConsumer userEventConsumer;
-
+    
+    public UserEventConsumerTest() {
+        this.reviewIds = Set.of(1L,
+                                2L,
+                                3L);
+        this.reviewIdsToDelete = Set.of(3L);
+        this.reviewIdsAfterDelete = Set.of(1L,
+                                           2L);
+        
+        this.user1 = new User("keycloakID",
+                              "user1",
+                              Set.of(Role.USER));
+        this.user1.setReviewsIds(this.reviewIds);
+        this.user2 = new User("keycloakID",
+                              "user2",
+                              Set.of(Role.ADMIN));
+        this.user2.setReviewsIds(this.reviewIdsAfterDelete);
+    }
+    
     @Test
     void handleBookDeletedEvent() throws JsonProcessingException {
-
-        Set<Long> reviewIds = Set.of(1L, 2L, 3L);
-        Set<Long> reviewIdsToDelete = Set.of(3L);
-        Set<Long> reviewIdsAfterDelete = Set.of(1L, 2L);
-
-        User user1 = new User("user1", "user1@email.com", "password", Role.USER);
-        user1.setReviewsIds(reviewIds);
-        User user2 = new User("user2", "user2@email.com", "password", Role.ADMIN);
-        user2.setReviewsIds(reviewIdsAfterDelete);
-
+        
         BookDtoEvent bookDtoEvent = new BookDtoEvent(KafkaEventType.BOOK_DELETED,
-                                                     reviewIdsToDelete);
+                                                     this.reviewIdsToDelete);
         String json = this.objectMapper.writeValueAsString(bookDtoEvent);
-
-        given(this.userRepository.findAll()).willReturn(List.of(user1, user2));
-
+        
+        given(this.userRepository.findAll()).willReturn(List.of(this.user1,
+                                                                this.user2));
+        
         this.userEventConsumer.handleBookDeletedEvent(json);
-
-        user1.setReviewsIds(reviewIdsAfterDelete);
-        verify(this.userRepository, times(1)).save(user1);
-        verify(this.userRepository, times(1)).save(user2);
+        
+        this.user1.setReviewsIds(reviewIdsAfterDelete);
+        verify(this.userRepository,
+               times(1)).save(this.user1);
+        verify(this.userRepository,
+               times(1)).save(this.user2);
     }
-
+    
     @Test
     void handleReviewsCreatedEvent() throws JsonProcessingException {
-
-        Set<Long> reviewsIds = Set.of(1L);
-        User user1 = new User("user1", "user1@email.com", "password", Role.USER);
-
-        ReviewDtoEvent reviewDtoEvent = new ReviewDtoEvent(KafkaEventType.REVIEWS_CREATED, "user1",
-                                                           "isbn1", reviewsIds);
+        
+        ReviewDtoEvent reviewDtoEvent = new ReviewDtoEvent(KafkaEventType.REVIEWS_CREATED,
+                                                           "user1",
+                                                           "isbn1",
+                                                           this.reviewIds);
         String json = this.objectMapper.writeValueAsString(reviewDtoEvent);
-
-        given(this.userRepository.findById(reviewDtoEvent.getUsername())).willReturn(
-                Optional.of(user1));
-
+        
+        given(this.userRepository.findById(reviewDtoEvent.getUsername())).willReturn(Optional.of(this.user1));
+        
         this.userEventConsumer.handleReviewsCreatedEvent(json);
-
-        user1.setReviewsIds(reviewsIds);
-        verify(this.userRepository, times(1)).save(user1);
+        
+        this.user1.setReviewsIds(this.reviewIds);
+        verify(this.userRepository,
+               times(1)).save(this.user1);
     }
-
+    
     @Test
     void handleReviewsDeletedEvent() throws JsonProcessingException {
-
-        Set<Long> reviewIds = Set.of(1L, 2L, 3L);
-        Set<Long> reviewIdsToDelete = Set.of(3L);
-        Set<Long> reviewIdsAfterDelete = Set.of(1L, 2L);
-
-        User user1 = new User("user1", "user1@email.com", "password", Role.USER);
-        user1.setReviewsIds(reviewIds);
-        User user2 = new User("user2", "user2@email.com", "password", Role.ADMIN);
-        user2.setReviewsIds(reviewIdsAfterDelete);
-
-        ReviewDtoEvent reviewDtoEvent = new ReviewDtoEvent(KafkaEventType.REVIEWS_DELETED, "user1",
-                                                           "isbn1", reviewIdsToDelete);
+        
+        ReviewDtoEvent reviewDtoEvent = new ReviewDtoEvent(KafkaEventType.REVIEWS_DELETED,
+                                                           "user1",
+                                                           "isbn1",
+                                                           reviewIdsToDelete);
         String json = this.objectMapper.writeValueAsString(reviewDtoEvent);
-
-        given(this.userRepository.findAll()).willReturn(List.of(user1, user2));
-
+        
+        given(this.userRepository.findAll()).willReturn(List.of(this.user1,
+                                                                this.user2));
+        
         this.userEventConsumer.handleReviewsDeletedEvent(json);
-
-        user1.setReviewsIds(reviewIdsAfterDelete);
-        verify(this.userRepository, times(1)).save(user1);
-        verify(this.userRepository, times(1)).save(user2);
-        assertThat(user1.getReviewsIds()).isEqualTo(reviewIdsAfterDelete);
+        
+        this.user1.setReviewsIds(this.reviewIdsAfterDelete);
+        verify(this.userRepository,
+               times(1)).save(this.user1);
+        verify(this.userRepository,
+               times(1)).save(this.user2);
+        assertThat(this.user1.getReviewsIds()).isEqualTo(this.reviewIdsAfterDelete);
     }
 }

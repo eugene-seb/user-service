@@ -1,124 +1,92 @@
 package com.eugene.user_service.service;
 
-import com.eugene.user_service.dto.*;
+import com.eugene.user_service.dto.UserDto;
+import com.eugene.user_service.dto.UserInfosDto;
 import com.eugene.user_service.exception.DuplicatedException;
 import com.eugene.user_service.exception.NotFoundException;
 import com.eugene.user_service.kafka.UserEventProducer;
-import com.eugene.user_service.model.Role;
 import com.eugene.user_service.model.User;
 import com.eugene.user_service.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class UserService
 {
     private final UserEventProducer userEventProducer;
     private final UserRepository userRepository;
-
-    public UserService(
-            UserEventProducer userEventProducer,
-            UserRepository userRepository
-    ) {
-        this.userEventProducer = userEventProducer;
-        this.userRepository = userRepository;
-    }
-
+    
     private static String getUserNotFoundMessage(String username) {
         return "User with username '" + username + "' not found.";
     }
-
+    
     @Transactional
-    public UserInfosDto createUser(UserDto userDto) {
-        boolean exists = this.userRepository.findById(userDto.getUsername())
-                                            .isPresent();
-        if (exists) {
+    public UserInfosDto createUser(
+            UserDto userDto,
+            String keycloakId
+    ) {
+        if (this.userRepository
+                .findByUsername(userDto.getUsername())
+                .isPresent()) {
             throw new DuplicatedException(
-                    "User with username '" + userDto.getUsername() + "' already exists.", null);
+                    "User with username '" + userDto.getUsername() + "' already exists.",
+                    null);
         }
+        if (this.userRepository.existsById(keycloakId)) {
+            throw new DuplicatedException(
+                    "User with Keycloak ID '" + keycloakId + "' already exists.",
+                    null);
+        }
+        User user;
         try {
-            User user = userDto.toUser();
-            return this.userRepository.save(user)
-                                      .toUserInfosDto();
+            user = userDto.toUser(keycloakId);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid role specified: " + userDto.getRole());
+            throw new IllegalArgumentException("Invalid role specified: " + userDto.getRoles());
         }
+        return this.userRepository
+                .save(user)
+                .toUserInfosDto();
     }
-
-    @Transactional
+    
+    @Transactional(readOnly = true)
     public List<UserInfosDto> getAllUsers() {
-        return this.userRepository.findAll()
-                                  .stream()
-                                  .map(User::toUserInfosDto)
-                                  .toList();
+        return this.userRepository
+                .findAll()
+                .stream()
+                .map(User::toUserInfosDto)
+                .toList();
     }
-
-    @Transactional
-    public UserInfosDto getUserById(String username) {
-        return this.userRepository.findById(username)
-                                  .map(User::toUserInfosDto)
-                                  .orElseThrow(() -> new NotFoundException(
-                                          getUserNotFoundMessage(username), null));
+    
+    @Transactional(readOnly = true)
+    public UserInfosDto getUserByUsername(String username) {
+        return this.userRepository
+                .findByUsername(username)
+                .map(User::toUserInfosDto)
+                .orElseThrow(() -> new NotFoundException(getUserNotFoundMessage(username),
+                                                         null));
     }
-
-    @Transactional
-    public Boolean isUserExist(String username) {
-        return this.userRepository.existsById(username);
+    
+    @Transactional(readOnly = true)
+    public UserInfosDto getUserById(String keycloakId) {
+        return this.userRepository
+                .findById(keycloakId)
+                .map(User::toUserInfosDto)
+                .orElseThrow(() -> new NotFoundException(getUserNotFoundMessage(keycloakId),
+                                                         null));
     }
-
+    
     @Transactional
-    public UserInfosDto updateEmail(EmailDto emailDto) {
-        User user = this.userRepository.findById(emailDto.getUsername())
-                                       .orElseThrow(() -> new NotFoundException(
-                                               getUserNotFoundMessage(emailDto.getUsername()),
-                                               null));
-
-        user.setEmail(emailDto.getEmail());
-
-        return this.userRepository.save(user)
-                                  .toUserInfosDto();
-    }
-
-    @Transactional
-    public UserInfosDto updatePassword(PasswordDto passwordDto) {
-        User user = this.userRepository.findById(passwordDto.getUsername())
-                                       .orElseThrow(() -> new NotFoundException(
-                                               getUserNotFoundMessage(passwordDto.getUsername()),
-                                               null));
-
-        user.setPassword(passwordDto.getPassword());
-
-        return this.userRepository.save(user)
-                                  .toUserInfosDto();
-    }
-
-    @Transactional
-    public UserInfosDto updateRole(RoleDto roleDto) {
-        User user = this.userRepository.findById(roleDto.getUsername())
-                                       .orElseThrow(() -> new NotFoundException(
-                                               getUserNotFoundMessage(roleDto.getUsername()),
-                                               null));
-        try {
-            Role role = Role.valueOf(roleDto.getRole());
-            user.setRole(role);
-
-            return this.userRepository.save(user)
-                                      .toUserInfosDto();
-
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid role value: " + roleDto.getRole());
-        }
-    }
-
-    @Transactional
-    public void deleteUser(String username) {
-        User user = this.userRepository.findById(username)
-                                       .orElseThrow(() -> new NotFoundException(
-                                               getUserNotFoundMessage(username), null));
-
-        this.userRepository.deleteById(username);
+    public void deleteUser(String keycloakId) {
+        User user = this.userRepository
+                .findById(keycloakId)
+                .orElseThrow(() -> new NotFoundException(getUserNotFoundMessage(keycloakId),
+                                                         null));
+        
+        this.userRepository.deleteById(keycloakId);
         this.userEventProducer.sendUserDeletedEvent(user.getReviewsIds());
     }
 }

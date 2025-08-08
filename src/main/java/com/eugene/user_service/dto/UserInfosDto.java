@@ -1,12 +1,13 @@
 package com.eugene.user_service.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.List;
 
 /**
  * This class is used to transfer simple user information.
@@ -21,10 +22,6 @@ public class UserInfosDto
     @Size(min = 3, max = 20, message = "The username must be from 3 to 20 characters.")
     private String username;
 
-    @NotBlank(message = "The email is required.")
-    @Email(message = "The email is not a valid email.")
-    private String email;
-
     @NotBlank(message = "The role is required.")
-    private String role;
+    private List<String> role;
 }
