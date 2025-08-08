@@ -17,34 +17,35 @@ import java.util.Set;
 public class User
 {
     @Id
+    @Column(name = "keycloak_id", unique = true, nullable = false)
+    private String keycloakId;
+    
     @Column(name = "username", unique = true, nullable = false)
     private String username;
-
-    private String email;
-    private String password;
-
+    
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "keycloak_id"))
     @Enumerated(EnumType.STRING)
-    private Role role;
-
+    private Set<Role> roles = new HashSet<>();
+    
     @ElementCollection
-    private Set<Long> reviewsIds;
-
+    private Set<Long> reviewsIds = new HashSet<>();
+    
     public User(
+            String keycloakId,
             String username,
-            String email,
-            String password,
-            Role role
+            Set<Role> roles
     ) {
+        this.keycloakId = keycloakId;
         this.username = username;
-        this.email = email;
-        this.password = password;
-        this.role = role;
-        this.reviewsIds = new HashSet<>();
+        this.roles = roles;
     }
-
+    
     public UserInfosDto toUserInfosDto() {
-        return new UserInfosDto(this.getUsername(), this.getEmail(), this.getRole()
-                                                                         .name());
+        return new UserInfosDto(this.username,
+                                this.roles
+                                        .stream()
+                                        .map(Enum::name)
+                                        .toList());
     }
-
 }
