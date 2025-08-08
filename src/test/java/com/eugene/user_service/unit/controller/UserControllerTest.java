@@ -7,11 +7,15 @@ import com.eugene.user_service.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -24,20 +28,24 @@ class UserControllerTest
 {
     @Autowired
     MockMvc mockMvc;
-
+    
     @MockitoBean
     UserService userService;
-
+    
     @Test
+    @WithMockUser(roles = "ADMIN")
     void getUser() throws Exception {
-        UserInfosDto user = new UserInfosDto("String username", "String email", Role.USER.name());
-
-        given(this.userService.getUserById(anyString())).willReturn(user);
-
-        this.mockMvc.perform(get("/user?username={name}", anyString()))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("username").value("String username"));
-
-        verify(this.userService).getUserById(anyString());
+        UserInfosDto user = new UserInfosDto("eugene",
+                                             List.of(Role.USER.name()));
+        
+        given(this.userService.getUserByUsername(anyString())).willReturn(user);
+        
+        this.mockMvc
+                .perform(get("/api/user/username/{username}",
+                             user.getUsername()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("username").value(user.getUsername()));
+        
+        verify(this.userService).getUserByUsername(contains(user.getUsername()));
     }
 }
