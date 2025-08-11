@@ -1,5 +1,6 @@
 package com.eugene.user_service.config;
 
+import com.eugene.user_service.model.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -22,9 +23,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig
 {
-    private static final String USER = "USER";
-    private static final String ADMIN = "ADMIN";
-    private static final String MODERATOR = "MODERATOR";
+    private static final String USER = Role.USER.name();
+    private static final String ADMIN = Role.ADMIN.name();
+    private static final String MODERATOR = Role.MODERATOR.name();
     
     private final JwtConverterProperties jwtConverterProperties;
     
@@ -46,6 +47,11 @@ public class SecurityConfig
                         
                         .requestMatchers("/api/user/delete/**")
                         .hasRole(ADMIN)
+                        
+                        .requestMatchers("/swagger-ui/**",
+                                         "/v3/api-docs/**",
+                                         "/swagger-ui/oauth2-redirect.html")
+                        .permitAll()
                         
                         .anyRequest()
                         .authenticated())
