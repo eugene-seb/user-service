@@ -60,7 +60,7 @@ class UserEventConsumerTest
     }
     
     @Test
-    void handleBookDeletedEvent() throws JsonProcessingException {
+    void handleUserEvent_bookDeleted() throws JsonProcessingException {
         
         BookDtoEvent bookDtoEvent = new BookDtoEvent(KafkaEventType.BOOK_DELETED,
                                                      this.reviewIdsToDelete);
@@ -68,8 +68,7 @@ class UserEventConsumerTest
         
         given(this.userRepository.findAll()).willReturn(List.of(this.user1,
                                                                 this.user2));
-        
-        this.userEventConsumer.handleBookDeletedEvent(json);
+        this.userEventConsumer.handleBookEvents(json);
         
         this.user1.setReviewsIds(reviewIdsAfterDelete);
         verify(this.userRepository,
@@ -79,7 +78,7 @@ class UserEventConsumerTest
     }
     
     @Test
-    void handleReviewsCreatedEvent() throws JsonProcessingException {
+    void handleReviewsEvent_reviewCreated() throws JsonProcessingException {
         
         ReviewDtoEvent reviewDtoEvent = new ReviewDtoEvent(KafkaEventType.REVIEWS_CREATED,
                                                            "user1",
@@ -87,9 +86,9 @@ class UserEventConsumerTest
                                                            this.reviewIds);
         String json = this.objectMapper.writeValueAsString(reviewDtoEvent);
         
-        given(this.userRepository.findById(reviewDtoEvent.getUsername())).willReturn(Optional.of(this.user1));
+        given(this.userRepository.findById(reviewDtoEvent.getUserId())).willReturn(Optional.of(this.user1));
         
-        this.userEventConsumer.handleReviewsCreatedEvent(json);
+        this.userEventConsumer.handleReviewsEvents(json);
         
         this.user1.setReviewsIds(this.reviewIds);
         verify(this.userRepository,
@@ -97,7 +96,7 @@ class UserEventConsumerTest
     }
     
     @Test
-    void handleReviewsDeletedEvent() throws JsonProcessingException {
+    void handleReviewsEvent_reviewDeleted() throws JsonProcessingException {
         
         ReviewDtoEvent reviewDtoEvent = new ReviewDtoEvent(KafkaEventType.REVIEWS_DELETED,
                                                            "user1",
@@ -108,7 +107,7 @@ class UserEventConsumerTest
         given(this.userRepository.findAll()).willReturn(List.of(this.user1,
                                                                 this.user2));
         
-        this.userEventConsumer.handleReviewsDeletedEvent(json);
+        this.userEventConsumer.handleReviewsEvents(json);
         
         this.user1.setReviewsIds(this.reviewIdsAfterDelete);
         verify(this.userRepository,

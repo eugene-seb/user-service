@@ -1,5 +1,6 @@
 package com.eugene.user_service.unit.controller;
 
+import com.eugene.user_service.config.JwtConverter;
 import com.eugene.user_service.controller.UserController;
 import com.eugene.user_service.dto.UserInfosDto;
 import com.eugene.user_service.model.Role;
@@ -13,6 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
@@ -30,13 +32,20 @@ class UserControllerTest
     MockMvc mockMvc;
     
     @MockitoBean
+    JwtConverter jwtConverter;
+    @MockitoBean
     UserService userService;
     
     @Test
     @WithMockUser(roles = "ADMIN")
     void getUser() throws Exception {
-        UserInfosDto user = new UserInfosDto("eugene",
-                                             List.of(Role.USER.name()));
+        
+        String keycloakId = "mock-keycloak-id";
+        
+        UserInfosDto user = new UserInfosDto(keycloakId,
+                                             "eugene",
+                                             List.of(Role.USER.name()),
+                                             Set.of(1L));
         
         given(this.userService.getUserByUsername(anyString())).willReturn(user);
         

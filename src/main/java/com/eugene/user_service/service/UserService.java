@@ -79,6 +79,11 @@ public class UserService
                                                          null));
     }
     
+    @Transactional(readOnly = true)
+    public Boolean isUserExist(String keycloakId) {
+        return this.userRepository.existsById(keycloakId);
+    }
+    
     @Transactional
     public void deleteUser(String keycloakId) {
         User user = this.userRepository
