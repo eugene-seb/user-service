@@ -42,10 +42,12 @@ public class User
     }
     
     public UserInfosDto toUserInfosDto() {
-        return new UserInfosDto(this.username,
+        return new UserInfosDto(this.keycloakId,
+                                this.username,
                                 this.roles
                                         .stream()
                                         .map(Enum::name)
-                                        .toList());
+                                        .toList(),
+                                this.reviewsIds);
     }
 }

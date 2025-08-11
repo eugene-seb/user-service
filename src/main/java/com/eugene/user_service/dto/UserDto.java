@@ -31,6 +31,14 @@ public class UserDto
         Set<Role> userRoles = (this.roles != null && !this.roles.isEmpty())
                 ? this.roles
                 .stream()
+                .filter(role -> {
+                    for (Role r : Role.values()) {
+                        if (r
+                                .name()
+                                .equals(role)) return true;
+                    }
+                    return false;
+                })
                 .map(Role::valueOf)
                 .collect(Collectors.toSet())
                 : Set.of(Role.USER);

@@ -7,20 +7,24 @@ import lombok.Setter;
 
 import java.util.Set;
 
-
 @Getter
 @Setter
 @NoArgsConstructor
-public class ReviewDtoEvent extends BaseDtoEvent {
-
-    private String username;
+public class ReviewDtoEvent
+        extends BaseDtoEvent
+{
+    private String userId;
     private String isbn;
     private Set<Long> reviewsIds;
-
+    
     public ReviewDtoEvent(
-            KafkaEventType eventType, String username, String isbn, Set<Long> reviewsIds) {
+            KafkaEventType eventType,
+            String userId,
+            String isbn,
+            Set<Long> reviewsIds
+    ) {
         super(eventType);
-        this.username = username;
+        this.userId = userId;
         this.isbn = isbn;
         this.reviewsIds = reviewsIds;
     }
