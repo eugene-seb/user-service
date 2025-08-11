@@ -148,6 +148,18 @@ class UserServiceFunctionalTest
     
     @Test
     @Order(4)
+    @WithMockUser
+    void doesUserExist() throws Exception {
+        
+        this.mockMvc
+                .perform(get("/api/user/exists/{keycloakID}",
+                             keycloakId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").value(true));
+    }
+    
+    @Test
+    @Order(5)
     @WithMockUser(roles = "ADMIN")
     void deleteUser() throws Exception {
         Jwt jwt = Jwt
