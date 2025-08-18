@@ -1,0 +1,33 @@
+package com.eugene.user_service.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.util.List;
+import java.util.Set;
+
+/**
+ * This class is used to transfer simple user information.
+ */
+@Setter
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
+public class UserInfosDto
+{
+    @NotBlank(message = "The username ID is required.")
+    private String keycloakId;
+    
+    @NotBlank(message = "The username is required.")
+    @Size(min = 3, max = 20, message = "The username must be from 3 to 20 characters.")
+    private String username;
+    
+    @NotBlank(message = "The role is required.")
+    private List<String> role;
+    
+    private Set<Long> reviewsIds;
+}
