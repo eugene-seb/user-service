@@ -7,7 +7,6 @@ import com.eugene.user_service.exception.NotFoundException;
 import com.eugene.user_service.kafka.UserEventProducer;
 import com.eugene.user_service.model.User;
 import com.eugene.user_service.repository.UserRepository;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +26,7 @@ public class UserService
     
     @Transactional
     public UserInfosDto createUser(
-            @Valid UserDto userDto,
+            UserDto userDto,
             String keycloakId
     ) {
         if (this.userRepository

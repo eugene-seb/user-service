@@ -5,6 +5,7 @@ import com.eugene.user_service.dto.UserDto;
 import com.eugene.user_service.dto.UserInfosDto;
 import com.eugene.user_service.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,7 +30,7 @@ public class UserController
     @PostMapping("/create/profile")
     @PreAuthorize("hasAnyRole('USER','ADMIN','MODERATOR')")
     public ResponseEntity<UserInfosDto> createProfile(
-            @RequestBody UserDto userDto,
+            @Valid @RequestBody UserDto userDto,
             @AuthenticationPrincipal Jwt jwt
     ) throws URISyntaxException {
         
