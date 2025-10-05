@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/api/user")
@@ -33,8 +32,6 @@ public class UserController
             @Valid @RequestBody UserDto userDto,
             @AuthenticationPrincipal Jwt jwt
     ) throws URISyntaxException {
-        
-        userDto.setRoles((Set<String>) jwtConverter.extractKeycloakRoles(jwt));
         
         String keycloakId = jwt.getClaim("sub");
         UserInfosDto userCreated = userService.createUser(userDto,

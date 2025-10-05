@@ -45,6 +45,9 @@ public class SecurityConfig
                         .hasAnyRole(ADMIN,
                                     MODERATOR)
                         
+                        .requestMatchers("/api/user/delete/me")
+                        .authenticated()
+                        
                         .requestMatchers("/api/user/delete/**")
                         .hasRole(ADMIN)
                         
